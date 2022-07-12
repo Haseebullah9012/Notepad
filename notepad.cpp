@@ -1,4 +1,5 @@
 #include<iostream>
+#include<fstream>
 #include<string>
 using namespace std;
 
@@ -37,7 +38,10 @@ class Notepad
         
         void movePointer(char);
         void NewLine();
+        void SaveFile();
+        void ReadFile();
 };
+
 
 int main()
 {
@@ -53,6 +57,7 @@ int main()
         cout << "\t\t Do you Want to \n"
              << "\t\t   D- Display Notepad    E- Enter Data    R- Remove Data \n"
              << "\t\t   M- Move Pointer       N- New Line \n"
+             << "\t\t   S- Save Notepad       I- Import Notepad \n"
              << "\t\t   Q- Quit Notepad: ";
         cin >> choice;
         cin.ignore(255,'\n');
@@ -73,7 +78,7 @@ int main()
             case 'e':
             case 'E':
                 cout << "Enter Data: ";
-                cin >> data;
+                getline(cin, data);
                 for(int i=0; i<data.length(); i++)
                     notepad.InsertChar(data[i]);
                 break;
@@ -96,6 +101,15 @@ int main()
                 notepad.NewLine();
                 break;
             
+            case 's':
+            case 'S':
+                notepad.SaveFile();
+                break;
+            case 'i':
+            case 'I':
+                notepad.ReadFile();
+                break;
+            
             default:
                 cout << "Illegal Choice! Choose from the Menu. " << endl;
         }
@@ -109,6 +123,7 @@ int main()
     getchar();
     return 0;
 }
+
 
 void Notepad::Display()
 {
@@ -361,6 +376,49 @@ void Notepad::NewLine()
 }
 
 
+void Notepad::SaveFile()
+{
+    ofstream file("Notepad.txt");
+    Node *tempR;
+    Node *tempD = head;
+    
+    while(tempD!=NULL)
+    {
+        tempR = tempD;
+        while(tempR!=NULL) {
+            file << tempR->character;    
+            tempR = tempR->next;
+        }
+        file << endl;
+        tempD = tempD->down;
+    }
+    file.close();
+    file << endl;
+
+    cout << "Successfully Saved to File. " << endl;
+}
+
+void Notepad::ReadFile()
+{
+    ifstream file("Notepad.txt");
+    if(!file.is_open()) {
+        cout << "No File Exist! " << endl;
+        return;
+    }
+    
+    string line;
+    while(!file.eof())
+    {
+        getline(file, line);
+        for(int i=0; i<line.length(); i++)
+            InsertChar(line[i]);
+        NewLine();
+    }
+    file.close();
+    cout << "Successfully Imported from File. " << endl;
+}
+
+
 void Notepad::correctLinksAfterInsertion(Node *node)
 {
     Node *link = node;
@@ -429,7 +487,6 @@ void Notepad::correctLinksAfterLineInsertion(Node *node)
         temp = temp->next;
     }
 }
-
 
 void Notepad::correctLinksAfterRemoval(Node *temp)
 {
