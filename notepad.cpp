@@ -18,6 +18,11 @@ class Notepad
         Node *lineStart;
         Node *pointer;
 
+        void correctLinksAfterInsertion(Node*);
+        void correctLinksAfterLineInsertion(Node*);
+        void correctLinksAfterRemoval(Node*);
+        void correctLinksAfterLineRemoval(Node*);
+    
     public:
         Notepad()
         {
@@ -178,23 +183,18 @@ void Notepad::InsertChar(char c)
 
             lineStart = node;
             pointer = lineStart;
+            correctLinksAfterLineInsertion(node);
         }
-        else 
+        else
         {
             node->next = lineStart;
             lineStart->prev = node;
             
-            node->up = node->next->up;
-            node->down = node->next->down;
-            if(node->up!=NULL)
-                node->up->down = node;
-            if(node->down!=NULL)
-                node->down->up = node;
-
             if(lineStart->up == NULL)
                 head = node;
             lineStart = node;
             pointer = lineStart;
+            correctLinksAfterInsertion(node);
         }
         
         return;
@@ -212,6 +212,7 @@ void Notepad::InsertChar(char c)
         node->down = pointer->down->next;
 
     pointer = node;
+    correctLinksAfterInsertion(node);
 }
 
 void Notepad::RemoveChar()
@@ -225,7 +226,7 @@ void Notepad::RemoveChar()
         if(head->next != NULL) {
             head = head->next;
             head->prev = NULL;
-            head->down = temp->down;
+            correctLinksAfterRemoval(temp);
         }
         else
         {
@@ -246,22 +247,15 @@ void Notepad::RemoveChar()
         {
             lineStart = lineStart->next;
             lineStart->prev = NULL;
-            
-            lineStart->up = temp->up;
-            lineStart->down = temp->down;
-            if(temp->up!=NULL)
-                temp->up->down = lineStart;
-            if(temp->down!=NULL)
-                temp->down->up = lineStart;
+            correctLinksAfterRemoval(temp);
         }
         else
         {
-            if(temp->up!=NULL)
-                temp->up->down = temp->down;
+            correctLinksAfterLineRemoval(temp);
+            lineStart = NULL;
+
             if(temp->down!=NULL)
                 temp->down->up = NULL; //For Middle Line
-
-            lineStart = NULL;
         }
         
         pointer = NULL;
@@ -276,6 +270,7 @@ void Notepad::RemoveChar()
         temp->prev->next = temp->next;
     
     pointer = temp->prev;
+    correctLinksAfterRemoval(temp);
     free(temp);
 }
 
@@ -363,4 +358,129 @@ void Notepad::NewLine()
 
     lineStart = NULL;
     pointer = NULL;
+}
+
+
+void Notepad::correctLinksAfterInsertion(Node *node)
+{
+    Node *link = node;
+    while(link!=NULL) //Link Node's Up & Down
+    {
+        if(link->next!=NULL)
+        {
+            link->up = link->next->up;
+            link->down = link->next->down;
+
+            if(link->up==NULL && link->down==NULL)
+                break;
+        }
+        else if(link->prev!=NULL) //For Last Node
+        {
+            if(link->up!=NULL)
+                link->up = link->prev->up->next;
+            if(link->down!=NULL)
+                link->down = link->prev->down->next;
+        }
+        link = link->next;
+    }
+
+    Node *temp = node;
+    link = node->up;
+    while(link!=NULL) //Link UpperLine-Node's Down
+    {
+        link->down = temp;
+        link = link->next;
+        temp = temp->next;
+        
+        if(temp==NULL)
+            break;
+    }
+    
+    temp = node;
+    link = node->down;
+    while(link!=NULL) //Link LowerLine-Node's Up
+    {
+        link->up = temp;
+        link = link->next;
+        temp = temp->next;
+        
+        if(temp==NULL)
+            break;
+    }
+}
+
+void Notepad::correctLinksAfterLineInsertion(Node *node)
+{
+    Node *temp = node->up;
+    if(temp!=NULL)
+        temp = temp->next;
+    while(temp!=NULL) //DeLink UpperLine-Node's Down
+    {
+        temp->down = NULL;
+        temp = temp->next;
+    }
+    
+    temp = node->down;
+    if(temp!=NULL)
+        temp = temp->next;
+    while(temp!=NULL) //DeLink LowerLine-Node's Up
+    {
+        temp->up = NULL;
+        temp = temp->next;
+    }
+}
+
+
+void Notepad::correctLinksAfterRemoval(Node *temp)
+{
+    Node *link = temp;
+    while(link!=NULL)
+    {
+        if(link->up==NULL && link->down==NULL)
+            break;
+
+        if(link->up!=NULL)
+            link->up->down = link->next; //Link UpperLine-Node's Down
+        if(link->down!=NULL)
+            link->down->up = link->next; //Link LowerLine-Node's Up
+        link = link->next;
+    }
+    
+    link = temp->up;
+    while(link!=NULL) //Link Node's Up
+    {
+        if(link->down==NULL)
+            break;
+        else
+            link->down->up = link;
+        link = link->next;
+    }
+    
+    link = temp->down;
+    while(link!=NULL) //Link Node's Down
+    {
+        if(link->up==NULL)
+            break;
+        else
+            link->up->down = link;
+        link = link->next;
+    }
+}
+
+void Notepad::correctLinksAfterLineRemoval(Node* temp)
+{
+    Node *linkUp = temp->up;
+    Node *linkDown = temp->down;
+    while(linkUp!=NULL || linkDown!=NULL)
+    {
+        if(linkUp!=NULL) {
+            linkUp->down = linkDown; //Link UpperLine-Node's Down
+            linkUp = linkUp->next;
+        }
+            
+        if(linkDown!=NULL) {
+            linkDown->up = linkUp; //Link LowerLine-Node's Up
+            linkDown = linkDown->next;
+        }
+    }
 }
