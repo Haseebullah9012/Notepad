@@ -23,6 +23,7 @@ class Notepad
         }
         void Display();
         void InsertChar(char);
+        void movePointer(char);
 };
 
 int main()
@@ -38,6 +39,7 @@ int main()
     {
         cout << "\t\t Do you Want to \n"
              << "\t\t   D- Display Notepad    E- Enter Data \n"
+             << "\t\t   M- Move Pointer \n"
              << "\t\t   Q- Quit Notepad: ";
         cin >> choice;
         cin.ignore(255,'\n');
@@ -63,6 +65,14 @@ int main()
                     notepad.InsertChar(data[i]);
                 break;
             
+            case 'm':
+            case 'M':
+                cout << "Where to Move (A-left, D-right): ";
+                cin >> data;
+                for(int i=0; i<data.length(); i++)
+                    notepad.movePointer(data[i]);
+                break;
+            
             default:
                 cout << "Illegal Choice! Choose from the Menu. " << endl;
         }
@@ -80,10 +90,26 @@ int main()
 void Notepad::Display()
 {
     Node *temp = head;
-    while(temp!=NULL) {
-        cout << temp->character;    
+    bool cursorShown = false;
+
+    if(pointer==NULL) {
+        cout << "\033[36m" << "|" << "\033[0m";
+        cursorShown = true;
+    }
+    
+    while(temp!=NULL)
+    {   
+        cout << temp->character;
+        if(temp == pointer) {
+            cout << "\033[36m" << "|" << "\033[0m";
+            cursorShown = true;
+        }
         temp = temp->next;
     }
+
+    if(!cursorShown && pointer==NULL)
+        cout << "\033[36m" << "|" << "\033[0m";
+    
     cout << endl;
 }
 
@@ -94,13 +120,47 @@ void Notepad::InsertChar(char c)
     node->prev = NULL;
     node->next = NULL;
     
-    if(head == NULL) {
+    if(pointer == NULL)
+    {
+        if(head!=NULL) {
+            node->next = head;
+            head->prev = node;
+        }
+        
         head = node;
         pointer = head;
         return;
     }
     
+    node->next = pointer->next;
     pointer->next = node;
     node->prev = pointer;
     pointer = node;
+}
+
+void Notepad::movePointer(char c)
+{
+    switch(c)
+    {
+        case 'a':
+        case 'A':
+            if(pointer==NULL)
+                break;
+            else if(pointer->prev!=NULL)
+                pointer = pointer->prev;
+            else if(pointer == head)
+                pointer = NULL;
+            break;
+        
+        case 'd':
+        case 'D':
+            if(pointer==NULL)
+                pointer = head;
+            else if(pointer->next!=NULL)
+                pointer = pointer->next;
+            break;
+
+        default:
+            break;
+    }
 }
