@@ -23,6 +23,7 @@ class Notepad
         }
         void Display();
         void InsertChar(char);
+        void RemoveChar();
         void movePointer(char);
 };
 
@@ -38,7 +39,7 @@ int main()
     while(!exit)
     {
         cout << "\t\t Do you Want to \n"
-             << "\t\t   D- Display Notepad    E- Enter Data \n"
+             << "\t\t   D- Display Notepad    E- Enter Data    R- Remove Data \n"
              << "\t\t   M- Move Pointer \n"
              << "\t\t   Q- Quit Notepad: ";
         cin >> choice;
@@ -63,6 +64,11 @@ int main()
                 cin >> data;
                 for(int i=0; i<data.length(); i++)
                     notepad.InsertChar(data[i]);
+                break;
+            
+            case 'r':
+            case 'R':
+                notepad.RemoveChar();
                 break;
             
             case 'm':
@@ -96,7 +102,7 @@ void Notepad::Display()
         cout << "\033[36m" << "|" << "\033[0m";
         cursorShown = true;
     }
-    
+
     while(temp!=NULL)
     {   
         cout << temp->character;
@@ -137,6 +143,37 @@ void Notepad::InsertChar(char c)
     node->prev = pointer;
     pointer = node;
 }
+
+void Notepad::RemoveChar()
+{
+    if(head==NULL || pointer==NULL)
+        return;
+    
+    if(pointer == head)
+    {
+        Node *temp = head;
+        if(head->next != NULL) {
+            head = head->next;
+            head->prev = NULL;
+        }
+        else
+            head = NULL;
+        
+        pointer = NULL;
+        free(temp);
+        return;
+    }
+    
+    Node *temp = pointer;
+    if(temp->next!=NULL)
+        temp->next->prev = temp->prev;
+    if(temp->prev!=NULL)
+        temp->prev->next = temp->next;
+    
+    pointer = temp->prev;
+    free(temp);
+}
+
 
 void Notepad::movePointer(char c)
 {
